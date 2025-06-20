@@ -13,12 +13,8 @@ export interface ChatRequest {
 export interface ChatResponse {
   success: boolean;
   data?: {
-    message: string;
-    usage?: {
-      prompt_tokens: number;
-      completion_tokens: number;
-      total_tokens: number;
-    };
+    content: string;
+    tokens: number;
   };
   error?: string;
 }

@@ -30,29 +30,26 @@ class OpenAIService {
 
   async chatCompletion(request: ChatRequest): Promise<ChatResponse> {
     try {
+      // Limita o histórico para evitar exceder o limite de tokens
+      const messages = request.messages.slice(-10); // Mantém apenas as últimas 10 mensagens
+
       const response = await this.client.chat.completions.create({
         model: request.model || this.defaultModel,
-        messages: request.messages,
+        messages,
         temperature: request.temperature || 0.7,
         max_tokens: request.max_tokens || 1000,
       });
 
-      const message = response.choices[0]?.message?.content;
-      if (!message) {
+      const content = response.choices[0]?.message?.content;
+      if (!content) {
         throw new Error("Resposta vazia da OpenAI");
       }
 
       return {
         success: true,
         data: {
-          message,
-          usage: response.usage
-            ? {
-                prompt_tokens: response.usage.prompt_tokens,
-                completion_tokens: response.usage.completion_tokens,
-                total_tokens: response.usage.total_tokens,
-              }
-            : undefined,
+          content,
+          tokens: response.usage?.total_tokens || 0,
         },
       };
     } catch (error) {

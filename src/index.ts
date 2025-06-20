@@ -15,12 +15,39 @@ import { swaggerSpec } from "./config/swagger";
 const app: Application = express();
 const PORT = process.env.PORT || 3000;
 
+// Configuração do CORS
+const allowedOrigins = [
+  "http://localhost:3000",
+  "http://localhost:3001",
+  "http://localhost:3002",
+  "http://localhost:3003",
+  "http://127.0.0.1:3000",
+  "http://127.0.0.1:3001",
+  "http://127.0.0.1:3002",
+  "http://127.0.0.1:3003",
+];
+
 // Middlewares de segurança e logging
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
+    origin: (origin, callback) => {
+      // Permitir requisições sem origin (como apps mobile ou Postman)
+      if (!origin) return callback(null, true);
+
+      // Verificar se a origem está na lista de permitidos
+      if (
+        allowedOrigins.indexOf(origin) !== -1 ||
+        process.env.NODE_ENV === "development"
+      ) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "X-Requested-With"],
   })
 );
 app.use(morgan("combined"));

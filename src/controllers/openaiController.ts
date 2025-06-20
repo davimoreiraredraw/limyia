@@ -6,24 +6,58 @@ import {
   CompletionRequest,
   SugestaoOrcamentoRequest,
   ApiError,
+  ChatMessage,
 } from "../types";
 
 export const healthCheck: RequestHandler = (_req, res) => {
   res.json({ status: "OK" });
 };
 
-export const chat: RequestHandler = async (req, res) => {
+export const chat = async (req: any, res: any) => {
   try {
-    const chatRequest: ChatRequest = req.body;
-    const response = await openaiService.chatCompletion(chatRequest);
-    res.json(response);
+    const { message, history } = req.body;
+
+    // Se não tiver histórico, usa apenas a mensagem atual
+    const messages: ChatMessage[] = history || [
+      { role: "user", content: message },
+    ];
+
+    // Validação do formato das mensagens
+    const isValidMessage = messages.every(
+      (msg: ChatMessage) =>
+        msg.role &&
+        ["system", "user", "assistant"].includes(msg.role) &&
+        typeof msg.content === "string" &&
+        msg.content.trim().length > 0
+    );
+
+    if (!isValidMessage) {
+      return res.status(400).json({
+        success: false,
+        error: "Formato inválido de mensagem no histórico",
+      });
+    }
+
+    const response = await openaiService.chatCompletion({ messages });
+
+    // Retorna apenas content e tokens
+    if (response.success && response.data) {
+      return res.json({
+        content: response.data.content,
+        tokens: response.data.tokens,
+      });
+    }
+
+    // Em caso de erro
+    return res.status(500).json({
+      content: "Desculpe, ocorreu um erro ao processar sua mensagem.",
+      tokens: 0,
+    });
   } catch (error) {
     console.error("Erro no chat:", error);
-    res.status(500).json({
-      message:
-        error instanceof Error ? error.message : "Erro interno no servidor",
-      status: 500,
-      timestamp: new Date().toISOString(),
+    return res.status(500).json({
+      content: "Desculpe, ocorreu um erro ao processar sua mensagem.",
+      tokens: 0,
     });
   }
 };
