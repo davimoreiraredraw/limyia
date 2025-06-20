@@ -1,12 +1,7 @@
-import { Router } from "express";
-import openaiController from "../controllers/openaiController";
-import express from "express";
-import openaiService from "../services/openaiService";
-import supabaseService from "../services/supabaseService";
-import { ApiError } from "../types";
+import { Router, RequestHandler } from "express";
+import * as openaiController from "../controllers/openaiController";
 
-const router = Router();
-
+const router: Router = Router();
 /**
  * @swagger
  * /api/openai/health:
@@ -65,7 +60,7 @@ router.get("/health", openaiController.healthCheck);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/sugestao-orcamento", openaiController.sugestaoOrcamentoIA);
+router.post("/sugestao-orcamento", openaiController.sugestaoOrcamento);
 
 /**
  * @swagger
@@ -99,7 +94,7 @@ router.post("/sugestao-orcamento", openaiController.sugestaoOrcamentoIA);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/chat", openaiController.chatCompletion);
+router.post("/chat", openaiController.chat);
 
 /**
  * @swagger
@@ -157,7 +152,7 @@ router.post("/chat", openaiController.chatCompletion);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.post("/completion", openaiController.textCompletion);
+router.post("/completion", openaiController.completion);
 
 /**
  * @swagger
@@ -212,7 +207,62 @@ router.post("/completion", openaiController.textCompletion);
  */
 router.post("/image", openaiController.generateImage);
 
-// Rota para buscar as últimas mensagens do usuário
+/**
+ * @swagger
+ * /api/openai/messages/{userId}:
+ *   get:
+ *     summary: Retorna as últimas 10 mensagens do usuário
+ *     tags: [Messages]
+ *     parameters:
+ *       - in: path
+ *         name: userId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID do usuário
+ *     responses:
+ *       200:
+ *         description: Lista de mensagens retornada com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   id:
+ *                     type: string
+ *                   user_id:
+ *                     type: string
+ *                   tipo_projeto:
+ *                     type: string
+ *                   estado:
+ *                     type: string
+ *                   metragem:
+ *                     type: number
+ *                   valor_informado:
+ *                     type: number
+ *                   margem:
+ *                     type: number
+ *                   cub_atual:
+ *                     type: number
+ *                   sugestao:
+ *                     type: string
+ *                   created_at:
+ *                     type: string
+ *       400:
+ *         description: ID do usuário não fornecido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ *       500:
+ *         description: Erro interno do servidor
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Error'
+ */
 router.get("/messages/:userId", openaiController.getUserMessages);
 
 export default router;
